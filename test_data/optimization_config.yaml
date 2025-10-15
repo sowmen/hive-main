@@ -18,7 +18,7 @@ exploration:
   max_tree_depth: 5
   expand_threshold: 95
   objective_value_threshold: 150
-  loop_sleep_sec: 5
+  loop_sleep_sec: 10
 
 collaboration:
   help_mode: enabled

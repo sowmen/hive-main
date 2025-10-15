@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Hive Real-Time Graph</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+
+<body>
+    <h2>Hive Live DAG</h2>
+    <div id="graph" style="width: 100%; height: 800px;"></div>
+    <script>
+        let container = document.getElementById("graph");
+        let options = {
+            layout: { hierarchical: { enabled: true, direction: "UD", sortMethod: "directed" } },
+            physics: false
+        };
+        let network = null;
+
+        function updateGraph(nodes, edges) {
+            let data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+            if (!network) {
+                network = new vis.Network(container, data, options);
+            } else {
+                network.setData(data);
+            }
+        }
+
+        // --- WebSocket live updates ---
+        let ws = new WebSocket("ws://" + window.location.host + "/ws");
+        ws.onmessage = function (event) {
+            let graphData = JSON.parse(event.data);
+            console.log(graphData);
+            updateGraph(graphData.nodes, graphData.edges);
+        };
+    </script>
+</body>
+
+</html>

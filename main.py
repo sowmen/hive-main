@@ -2,6 +2,7 @@ import ray
 import time
 import argparse
 import yaml
+import os
 
 from src.session_manager import SessionManager
 from src.session_input import create_input
@@ -14,29 +15,28 @@ from src.utils import redirect_print_to_log
 from value_fn import DefinedValueFunction
 
 if __name__ == "__main__":
-    import debugpy
-
+    # import debugpy
     # debugpy.listen(5678)
     # print("Waiting for debugger attach")
     # debugpy.wait_for_client()
     # debugpy.breakpoint()
     # print('break on this line')
+    # redirect_print_to_log("logs/log.txt")
 
-    # redirect_print_to_log("log.txt")
     ray.init(runtime_env={"env_vars": {"RAY_DEBUG": "legacy"}})
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--restart", help="Continue last session", action="store_true")
     parser.add_argument("--num_worker", help="Number of workers", type=int, default=3)
     parser.add_argument(
-        "--config",
-        help="Path to the optimization config file",
-        default="test_data/optimization_config.yaml",
+        "--data_path",
+        help="Path to the data folder",
+        default="test_data",
     )
     args = parser.parse_args()
 
     # Load the optimization config
-    with open(args.config, "r") as fp:
+    with open(os.path.join(args.data_path, "optimization_config.yaml"), "r") as fp:
         config = yaml.safe_load(fp)["exploration"]
 
     OBJECTIVE_VALUE_THRESHOLD = config["objective_value_threshold"]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         orch.restart_session.remote()
     else:
         # Insert root node
-        root_metadata = create_input(data_path="test_data")
+        root_metadata = create_input(data_path=args.data_path)
         ray.get(
             db_actor.insert_node.remote(
                 {
@@ -115,6 +115,11 @@ if __name__ == "__main__":
                 ):
                     print(
                         f"[MAIN] Objective achieved by node {node['id']} (value={node['value']})"
+                    )
+                    ray.get(
+                        db_actor.update_node.remote(
+                            node["id"], {"state": "GOAL_REACHED"}
+                        )
                     )
                     raise KeyboardInterrupt
 

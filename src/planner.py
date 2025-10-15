@@ -19,8 +19,8 @@ class PlannerActor:
         ideas = [f"Optimization idea {i} from {node_id}" for i in range(1, 4)]
 
         # Insert children into DB
-        for idea in ideas:
-            new_id = f"{node_id}_child_{abs(hash(idea)) % 99}"
+        for i, idea in enumerate(ideas):
+            new_id = f"{node_id}_c{i}"
             child_task = {
                 "id": new_id,
                 "state": "READY_EXECUTE",

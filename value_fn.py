@@ -20,6 +20,6 @@ class DefinedValueFunction(ValueFunction):
 
         import random
 
-        score = random.uniform(80, 160)
+        score = random.uniform(70, 155)
 
         return score
