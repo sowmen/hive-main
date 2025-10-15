@@ -1,0 +1,53 @@
+# Overview
+my_design is a simple combinational datapath module written in Verilog that computes the product of the sum of two 32-bit inputs and a third 32-bit input.
+It has clock and reset input ports defined, although these are not currently used in the combinational logic. The module has an enable signal en, which is also not currently used in the datapath.
+
+# Mathematically:
+y = (a + b) × c
+
+Interface Specification
+# Inputs:
+- clk (1 bit, wire): Clock signal (currently unused in logic)
+- rst_n (1 bit, wire): Active-low reset signal (currently unused in logic)
+- a (32 bits, wire): First operand for sum
+- b (32 bits, wire): Second operand for sum
+- c (32 bits, wire): Operand to multiply with sum
+- en (1 bit, wire): Enable signal (currently unused in logic)
+
+# Outputs:
+y (32 bits, wire): Result of (a + b) × c
+
+# Functional Behavior
+Operation: The module computes the sum of inputs a and b, producing an intermediate value sum.
+It then multiplies sum by input c, producing prod.
+Finally, y is assigned the value of prod.
+
+# Dataflow:
+sum = a + b
+prod = sum × c
+y = prod
+
+# Timing: The design is purely combinational; there is no pipelining and no clocked logic. The output y updates immediately when any input changes.
+Note: Inputs clk, rst_n, and en are unused in the current functionality, but are defined for possible future enhancements.
+
+# Reset Behavior
+rst_n has no effect on the internal logic or outputs because all operations are purely combinational.
+
+# Enable Signal
+en is currently unused. A future revision could make computation conditional on en.
+
+# Resource Utilization (Conceptual)
+- 32-bit combinational adder
+- 32-bit combinational multiplier
+- No flip-flops or registers
+
+# Limitations
+- No overflow handling; addition and multiplication wrap around naturally in two’s complement arithmetic as per Verilog rules.
+- Inputs are assumed valid at all times; no handshake or timing control.
+- clk and rst_n are reserved for possible pipelined implementations but unused now.
+
+# Potential Future Enhancements
+- Use en to gate output updates
+- Add pipeline registers for timing closure
+- Add reset behavior if registers are introduced
+- Add saturation or overflow detection
