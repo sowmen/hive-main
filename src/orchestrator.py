@@ -14,7 +14,7 @@ class OrchestratorActor:
         self.planner_actor = planner_actor
         print(f"[Orchestrator] Initialized")
 
-    def scan_and_dispatch(self):
+    def scan_and_dispatch(self, iter):
         """
         Handle both READY_EXECUTE and READY_EXPAND queues.
         """
@@ -24,14 +24,18 @@ class OrchestratorActor:
         ready_exec.sort(key=lambda t: t.get("priority", 0.0), reverse=True)
 
         if ready_exec:
-            print(f"[Orchestrator] Dispatching {len(ready_exec)} tasks to workers.")
+            print(
+                f"[Orchestrator (iter:{iter})] Dispatching {len(ready_exec)} tasks to workers."
+            )
             for idx, node in enumerate(ready_exec):
                 if not self.worker_pool:
-                    print(f"[Orchestrator] No workers available for node {node['id']}")
+                    print(
+                        f"[Orchestrator (iter:{iter})] No workers available for node {node['id']}"
+                    )
                     continue
                 worker = self.worker_pool[idx % len(self.worker_pool)]
                 print(
-                    f"[Orchestrator] Assigning task {node['id']} to worker {idx % len(self.worker_pool)}"
+                    f"[Orchestrator (iter:{iter})] Assigning task {node['id']} to worker {idx % len(self.worker_pool)}"
                 )
                 ray.get(
                     self.db_actor.update_node.remote(node["id"], {"state": "RUNNING"})
@@ -40,11 +44,15 @@ class OrchestratorActor:
 
         # ---- Planner-ready nodes ----
         ready_expand = ray.get(self.db_actor.get_nodes.remote("READY_EXPAND"))
-        print(f"[Orchestrator] Found {len(ready_expand)} nodes ready to expand")
+        print(
+            f"[Orchestrator (iter:{iter})] Found {len(ready_expand)} nodes ready to expand"
+        )
         if ready_expand:
             chosen_nodes = self.select_nodes_for_expansion(ready_expand)
             for node in chosen_nodes:
-                print(f"[Orchestrator] Sending node {node['id']} to Planner.")
+                print(
+                    f"[Orchestrator (iter:{iter})] Sending node {node['id']} to Planner."
+                )
                 ray.get(
                     self.db_actor.update_node.remote(node["id"], {"state": "EXPANDING"})
                 )
@@ -65,9 +73,7 @@ class OrchestratorActor:
         # Else, choose best value node
         return sorted(candidates, key=lambda t: t.get("value", 0.0), reverse=True)[:1]
 
-    def handle_need_info(self):
-        print("[Orchestrator] Handling need info...")
-
+    def handle_need_info(self, iter):
         need_info_nodes = ray.get(self.db_actor.get_nodes.remote("NEED_MORE_INFO"))
         for node in need_info_nodes:
             # Mark state as ticket sent
@@ -80,7 +86,7 @@ class OrchestratorActor:
                 f"[Ticket] node {node['id']} needs info: {node['metadata'].get('info_required', 'N/A')}"
             )
 
-        print(f"[Orchestrator] Sent {len(need_info_nodes)} tickets.")
+        print(f"[Orchestrator (iter:{iter})] Sent {len(need_info_nodes)} tickets.")
 
     def restart_session(self):
         running_nodes = ray.get(self.db_actor.get_nodes.remote("RUNNING"))

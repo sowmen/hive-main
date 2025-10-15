@@ -11,6 +11,8 @@ from src.worker import WorkerActor
 from src.db_actor import DBActor
 from src.utils import redirect_print_to_log
 
+from value_fn import DefinedValueFunction
+
 if __name__ == "__main__":
     import debugpy
 
@@ -25,6 +27,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--restart", help="Continue last session", action="store_true")
+    parser.add_argument("--num_worker", help="Number of workers", type=int, default=3)
     parser.add_argument(
         "--config",
         help="Path to the optimization config file",
@@ -56,10 +59,14 @@ if __name__ == "__main__":
         print(f"[INFO] Created new session: {session_id} under {db_path}")
 
     # ==== Create planner + workers ====
-    db_actor = DBActor.remote(db_path)
-    planner = PlannerActor.remote(db_actor)
-    workers = [WorkerActor.remote(db_actor) for _ in range(2)]
-    orch = OrchestratorActor.remote(
+    value_fn = DefinedValueFunction()
+    db_actor = DBActor.options(name="db_actor").remote(db_path)
+    planner = PlannerActor.options(name="planner_actor").remote(db_actor)
+    workers = [
+        WorkerActor.remote(db_actor, MAX_TREE_DEPTH, EXPAND_THRESHOLD, value_fn)
+        for _ in range(args.num_worker)
+    ]
+    orch = OrchestratorActor.options(name="orch_actor").remote(
         db_actor, worker_pool=workers, planner_actor=planner
     )
 
@@ -85,15 +92,22 @@ if __name__ == "__main__":
         )
 
     try:
+        iter = 0
         while True:
+            iter += 1
+
             # Orchestrator decides work allocation
-            orch.handle_need_info.remote()
-            orch.scan_and_dispatch.remote()
+            orch.handle_need_info.remote(iter)
+            orch.scan_and_dispatch.remote(iter)
 
             all_nodes = ray.get(db_actor.get_all.remote())
 
             # ---- Objective check ----
-            finished_nodes = [node for node in all_nodes if node["state"] == "FINISHED"]
+            finished_nodes = [
+                node
+                for node in all_nodes
+                if (node["state"] == "FINISHED" or node["state"] == "READY_EXPAND")
+            ]
             for node in finished_nodes:
                 if (
                     node["value"] is not None
@@ -104,26 +118,31 @@ if __name__ == "__main__":
                     )
                     raise KeyboardInterrupt
 
-            # ---- Max depth check ----
-            all_depths = [t.get("depth", 0) for t in all_nodes]
-            if all_depths and max(all_depths) >= MAX_TREE_DEPTH:
-                print(f"[MAIN] Max tree depth {MAX_TREE_DEPTH} reached. Stopping.")
-                break
+            # 1. Check for ready to dispatch nodes
+            ready_execute_nodes = [
+                node for node in all_nodes if node["state"] == "READY_EXECUTE"
+            ]
 
-            # ---- Active work check ----
+            # 2. Check for ready to expand nodes
+            ready_expand_nodes_below_max_depth = [
+                node
+                for node in all_nodes
+                if (node["state"] == "READY_EXPAND") and node["depth"] < MAX_TREE_DEPTH
+            ]
+
+            # 3. Check for active nodes
             active_nodes = [
                 node
                 for node in all_nodes
                 if node["state"] == "RUNNING" or node["state"] == "EXPANDING"
             ]
-            ready_nodes = [
-                node
-                for node in all_nodes
-                if node["state"] == "READY_EXECUTE" or node["state"] == "READY_EXPAND"
-            ]
-            if not active_nodes and not ready_nodes:
-                # All queues empty and no active work
-                print("[MAIN] No active nodes or queued nodes. Stopping.")
+
+            if (
+                not active_nodes
+                and not ready_execute_nodes
+                and not ready_expand_nodes_below_max_depth
+            ):
+                print(f"[MAIN] No active nodes and no nodes to expand. Stopping.")
                 break
 
             time.sleep(LOOP_SLEEP_SEC)

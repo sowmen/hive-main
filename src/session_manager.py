@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from tinydb import TinyDB
+
 
 class SessionManager:
     def __init__(self, base_dir="sessions"):
@@ -9,7 +9,7 @@ class SessionManager:
 
     def create_session(self, user_id):
         """
-        Create a new session JSON file and return TinyDB instance + session_id.
+        Create a new session JSON file and return session_id and path to the file
         """
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         session_id = f"{user_id}_{ts}"
@@ -18,7 +18,7 @@ class SessionManager:
 
     def load_session(self, session_id):
         """
-        Load existing session TinyDB instance.
+        Load existing session. Return path to the session file
         """
         session_path = self.get_session_file_path(session_id)
         if not os.path.exists(session_path):
@@ -30,6 +30,6 @@ class SessionManager:
         List existing session files.
         """
         return [f[:-5] for f in os.listdir(self.base_dir) if f.endswith(".json")]
-    
+
     def get_session_file_path(self, session_id):
         return os.path.join(self.base_dir, f"{session_id}.json")

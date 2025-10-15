@@ -18,4 +18,8 @@ class DefinedValueFunction(ValueFunction):
 
         score = perf_score - (power_norm * 0.2) - (area_norm * 0.1)
 
+        import random
+
+        score = random.uniform(80, 160)
+
         return score

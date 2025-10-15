@@ -25,7 +25,6 @@ class WorkerActor:
         except (TypeError, ValueError) as e:
             print(f"[Worker] ValueFunction error for node {task_id}: {e}")
             fake_value = -float("inf")  # or handle as FAILED
-        # fake_value = round(abs(hash(node_id)) % 1000 / 10.0, 2)  # simulated score
 
         # Fetch current depth to decide end state
         node = ray.get(self.db_actor.search.remote(lambda x: x["id"] == node_id))[0]

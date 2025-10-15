@@ -8,7 +8,7 @@ class PlannerActor:
         print(f"[Planner] Initialized")
 
     def expand_node(self, node_id):
-        node: dict = ray.get(self.db_actor.search.remote(lambda n: n["id"] == node_id))[0]
+        node = ray.get(self.db_actor.search.remote(lambda n: n["id"] == node_id))[0]
         if not node:
             print(f"[Planner] Node {node_id} not found.")
             return
@@ -20,7 +20,7 @@ class PlannerActor:
 
         # Insert children into DB
         for idea in ideas:
-            new_id = f"{node_id}_child_{abs(hash(idea)) % 9999}"
+            new_id = f"{node_id}_child_{abs(hash(idea)) % 99}"
             child_task = {
                 "id": new_id,
                 "state": "READY_EXECUTE",
