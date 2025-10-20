@@ -11,7 +11,7 @@ from tinydb import TinyDB
 from starlette.websockets import WebSocketDisconnect
 
 # Parse arguments before FastAPI app creation
-parser = argparse.ArgumentParser(description="MonteCircuits Visualizer Server")
+parser = argparse.ArgumentParser(description="Hive Visualizer Server")
 parser.add_argument(
     "--json", help="Path to saved graph JSON or TinyDB file", default=None
 )
