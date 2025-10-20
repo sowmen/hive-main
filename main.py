@@ -6,8 +6,8 @@ import os
 
 from src.session_manager import SessionManager
 from src.session_input import create_input
-from src.planner import PlannerActor
-from src.orchestrator import OrchestratorActor
+from planner.planner import PlannerActor
+from orchestrator.orchestrator import OrchestratorActor
 from src.worker import WorkerActor
 from src.db_actor import DBActor
 from src.utils import redirect_print_to_log
@@ -80,8 +80,8 @@ if __name__ == "__main__":
             db_actor.insert_node.remote(
                 {
                     "id": "root",
-                    "state": "READY_EXPAND",
-                    "priority": 0.0,
+                    "state": "READY_EXECUTE",
+                    "priority": 1.0,
                     "value": None,
                     "depth": 0,
                     "metadata": root_metadata.to_dict(),

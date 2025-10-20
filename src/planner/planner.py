@@ -41,3 +41,7 @@ class PlannerActor:
         print(
             f"[Planner] Finished expanding node {node_id}. Added {len(ideas)} children."
         )
+
+
+def generate_ideas():
+    

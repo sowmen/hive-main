@@ -1,0 +1,32 @@
+
+Task: Propose PPA optimization strategies for this RTL design.
+
+RTL Code: ${rtl}
+Current PPA: ${ppa_report}
+Goals: ${project_goals}
+Human Context: ${resolved_ticket_answers}
+
+Process:
+1. Analyze the RTL code using your built-in context management
+2. Review previous optimization history from graph: ${historical_context}
+3. Identify optimization opportunities
+4. Distinguish between what you can implement vs. what requires human clarification
+
+Before requesting help, check:
+- Is information discoverable in the code?
+- Is this Implementation (you can handle) or Intent (need human)?
+- Is the potential value significant enough?
+
+Output Format (JSON):
+{
+  "strategies": [
+    "Actionable optimization idea 1",
+    "Actionable optimization idea 2",
+    ...
+  ],
+  "help_requests": [
+    "Specific question blocking a high-value optimization"
+  ]
+}
+
+You can include both strategies AND help_requests. Omit keys if empty.

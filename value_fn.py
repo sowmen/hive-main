@@ -11,6 +11,7 @@ also change the import in main.py
 
 class DefinedValueFunction(ValueFunction):
     def __call__(self, report: dict) -> float:
+        # TODO: Send the history of the reports of parents
         # Example: Weighted sum of Performance, inverse of Power, inverse of Area
         perf_score = report.get("performance_mhz", 0)
         power_norm = max(report.get("power_mw", 1), 1)  # avoid div by 0

@@ -42,3 +42,7 @@ class WorkerActor:
             node_id, {"state": next_state, "value": fake_value}
         )
         print(f"[Worker] Task {node_id} done, value={fake_value}, state={next_state}")
+
+
+def generate_ppa(rtl_path):
+    
